@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Flight Information</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Type" content="text/css; charset=utf-8">
+  <link rel="stylesheet" href="/stylesheets/navbar.css">
+  <link rel="stylesheet" href="/stylesheets/table.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+<body>
+  <% include navbar.ejs %>
+  <div class="container">
+    <h2>Search Delayed Flights</h2>
+    <form action="/searchFlights" method="GET">
+      <div class="form-row">
+        <div class="form-group col-md-1">
+          <label for="year">Year:</label>
+          <input type="number" class="form-control" id="year" name="year" value="<%= typeof year !== 'undefined' ? year : '' %>">
+        </div>
+        <div class="form-group col-md-2">
+          <label for="month">Month:</label>
+          <select class="form-control" id="month" name="month">
+            <option value="">-- Select Month --</option>
+            <option value="1" <%= month === '1' ? 'selected' : '' %>>January</option>
+            <option value="2" <%= month === '2' ? 'selected' : '' %>>February</option>
+            <option value="3" <%= month === '3' ? 'selected' : '' %>>March</option>
+            <option value="4" <%= month === '4' ? 'selected' : '' %>>April</option>
+            <option value="5" <%= month === '5' ? 'selected' : '' %>>May</option>
+            <option value="6" <%= month === '6' ? 'selected' : '' %>>June</option>
+            <option value="7" <%= month === '7' ? 'selected' : '' %>>July</option>
+            <option value="8" <%= month === '8' ? 'selected' : '' %>>August</option>
+            <option value="9" <%= month === '9' ? 'selected' : '' %>>September</option>
+            <option value="10" <%= month === '10' ? 'selected' : '' %>>October</option>
+            <option value="11" <%= month === '11' ? 'selected' : '' %>>November</option>
+            <option value="12" <%= month === '12' ? 'selected' : '' %>>December</option>
+        </select>        
+        </div>
+        <div class="form-group col-md-1">
+          <label for="day">Day:</label>
+          <input type="number" class="form-control" id="day" name="day" value="<%= typeof day !== 'undefined' ? day : '' %>">
+        </div>
+        <div class="form-group col-md-2">
+          <label for="PlannedDepartureTime">PlannedDepartureTime:</label>
+          <input type="text" class="form-control" id="plannedDepartureTime" name="plannedDepartureTime" value="<%= typeof plannedDepartureTime !== 'undefined' ? plannedDepartureTime : '' %>" placeholder="Format: HHMM">
+        </div>
+        <div class="form-group col-md-2">
+          <label for="tailNumber">TailNumber:</label>
+          <input type="text" class="form-control" id="tailNumber" name="tailNumber" value="<%= typeof tailNumber !== 'undefined' ? tailNumber : '' %>">
+        </div>
+        <div class="form-group col-md-2">
+          <label for="airline">Airline:</label>
+          <input type="text" class="form-control" id="airline" name="airline" value="<%= typeof airline !== 'undefined' ? airline : '' %>" placeholder="Two capital letters">
+        </div>
+
+        <div class="form-group col-md-1">
+          <label for="originAirport">Origin:</label>
+          <input type="text" class="form-control" id="originAirport" name="originAirport" value="<%= typeof originAirport !== 'undefined' ? originAirport : '' %>">
+        </div>
+        <div class="form-group col-md-1">
+          <label for="destinationAirport">Destination:</label>
+          <input type="text" class="form-control" id="destinationAirport" name="destinationAirport" value="<%= typeof destinationAirport !== 'undefined' ? destinationAirport : '' %>">
+        </div>
+      </div>
+      <div class="submit-button-container">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <button class="btn btn-warning" onclick="insert(event)">Insert</button>
+      </div>
+    </form>
+    <form class="resultForm">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Month</th>
+            <th>Day</th>
+            <th>Tail Number</th>
+            <th>Planned Departure Time</th>
+            <th>Day of Week</th>
+            <th>Airline</th>
+            <th>Origin Airport</th>
+            <th>Destination Airport</th>
+            <th>Check to Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% weekday = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          for (var i = 0; i < flights.length; i++) { 
+            flightId = [flights[i].Year, flights[i].Month, flights[i].Day, flights[i].TailNumber, flights[i].PlannedDepartureTime].join('|');%>
+          <tr data-flight-id="<%= flightId %>">
+            <td><%= flights[i].Year %></td>
+            <td><%= flights[i].Month %></td>
+            <td><%= flights[i].Day %></td>
+            <td><%= flights[i].TailNumber %></td>
+            <td><%= flights[i].PlannedDepartureTime %></td>
+            <td><%= weekday[flights[i].DayOfWeek] %></td>
+            <td><%= flights[i].Airline %></td>
+            <td><%= flights[i].OriginAirport %></td>
+            <td><%= flights[i].DestinationAirport %></td>
+            <td><input type="checkbox" name="selectedFlights" value="<%= flightId %>"></td>
+            <td><button class="btn btn-info edit-btn" onclick="editRow(this, event)">Edit</button><button class="btn btn-success save-btn" onclick="saveRow(this, event)" style="display: none;">Save</button></td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      <button class="btn btn-danger float-right" onclick="deleteSelectedRows(event)">Delete Selected Flights</button>
+    </form>
+    <div>
+      <h2>Related Airports Information</h2>
+      <table class="table" id="airportTable" style="margin-top: 20px;">
+        <thead>
+          <tr>
+            <th>IATA_CODE</th>
+            <th>Name</th>
+            <th>City</th>
+            <th>State</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>DelayedFLightAmount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (var i = 0; i < airports.length; i++) { %>
+          <tr data-flight-id="<%= flightId %>">
+            <td><%= airports[i].IATA_CODE %></td>
+            <td><%= airports[i].Name %></td>
+            <td><%= airports[i].City %></td>
+            <td><%= airports[i].State %></td>
+            <td><%= airports[i].Latitude %></td>
+            <td><%= airports[i].Longitude %></td>
+            <td><%= airports[i].DelayedFlightAmount %></td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+    
+  </div>
+</body>
+<script>
+    function editRow(button, event) {
+      event.preventDefault();
+      const row = event.target.closest('tr');
+      row.classList.add('editable');
+      const tr = button.closest('tr');
+      const tds = tr.querySelectorAll('td:not(:nth-last-child(-n+2))');
+      const btns = tr.querySelectorAll('button');
+      tds.forEach(td => {
+        const input = document.createElement('input');
+        input.value = td.textContent;
+        td.textContent = '';
+        td.appendChild(input);
+      });
+      btns[0].style.display = 'none';
+      btns[1].style.display = 'inline-block';
+    }
+
+    function saveRow(button, event) {
+      event.preventDefault();
+      const tr = button.closest('tr');
+      const tds = tr.querySelectorAll('td:not(:nth-last-child(-n+2))');
+      const btns = tr.querySelectorAll('button');
+      var values = []
+      tds.forEach(td => {
+        const input = td.querySelector('input');
+        values.push(input.value);
+      });
+      // parse parameters from values
+      [_year, _month, _day, _tailNumber, _plannedDepartureTime, _dayOfWeek, _airline, _originAirport, _destinationAirport] = values
+      
+      // calculate the day of week
+      var date = new Date(_year, _month - 1, _day);
+      _dayOfWeek = date.getDay();
+      weekday = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+      // check whether the day of week parameter is correct according to year, month and day
+      if(values[5] !== weekday[_dayOfWeek]){
+        console.log(typeof values[5]);
+        values[5] = weekday[_dayOfWeek];
+        alert("The day of week of date " + [_year, _month, _day].join('-') + " is " + weekday[_dayOfWeek]);
+      }
+      const checkbox = tr.querySelector('td:nth-last-child(2) input[type="checkbox"]');
+      const id = checkbox.value;
+      var data = {
+        "id": id,
+        "year": _year,
+        "month": _month,
+        "day": _day,
+        "tailNumber": _tailNumber,
+        "plannedDepartureTime": _plannedDepartureTime,
+        "airline": _airline,
+        "originAirport": _originAirport,
+        "destinationAirport": _destinationAirport,
+        "dayOfWeek": _dayOfWeek
+      }
+      console.log(data);
+
+      // send a post request to the server
+      fetch('/updateFlight', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+      }).then((response) => {
+        if (response.status === 500) {
+            response.json().then(json => {
+              alert(json.error_message);
+              // revert the row to the original one
+              origin_info = []
+              origin_info.push(json.origin_info.Year);
+              origin_info.push(json.origin_info.Month);
+              origin_info.push(json.origin_info.Day);
+              origin_info.push(json.origin_info.TailNumber);
+              origin_info.push(json.origin_info.PlannedDepartureTime);
+              origin_info.push(weekday[json.origin_info.DayOfWeek-'0']);
+              origin_info.push(json.origin_info.Airline);
+              origin_info.push(json.origin_info.OriginAirport);
+              origin_info.push(json.origin_info.DestinationAirport);
+              tds.forEach(td => {
+                td.textContent = origin_info[0];
+                origin_info.shift();
+              });
+            });
+          } else {
+            tds.forEach(td => {
+              td.textContent = values[0];
+              values.shift();
+            });
+            newid = [_year, _month, _day, _tailNumber, _plannedDepartureTime].join('|');
+            checkbox.value = newid;
+            tr.setAttribute('data-flight-id', newid);
+            console.log("update successful!");
+          }
+        }).catch((error) => {
+            console.error(error);
+        });
+      btns[0].style.display = 'inline-block';
+      btns[1].style.display = 'none';
+      const row = event.target.closest('tr');
+      row.classList.remove('editable');
+      location.reload();
+    }
+
+    function deleteSelectedRows(event){
+        event.preventDefault();
+        const table = document.querySelector('table tbody');
+        const checkboxes = table.querySelectorAll('input[type="checkbox"]:checked');
+        const ids = [];
+        checkboxes.forEach((checkbox) => {
+            ids.push(checkbox.value);
+            console.log(checkbox.value);
+        });
+        fetch('/deleteFlights', {
+            method: 'POST',
+            body: JSON.stringify(ids),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then((response) => {
+            if (!response.ok) {
+                console.error(response.statusText);
+                return;
+            }
+            // Remove the selected rows from the table
+            checkboxes.forEach((checkbox) => {
+                const row = checkbox.closest('tr');
+                row.remove();
+            });
+        }).catch((error) => {
+            console.error(error);
+        });
+        location.reload();
+    }
+    function insert(event){
+      event.preventDefault();
+      _year = year.value;
+      _month = month.value;
+      _day = day.value;
+      _tailNumber = tailNumber.value;
+      _plannedDepartureTime = plannedDepartureTime.value;
+      _airline = airline.value;
+      _originAirport = originAirport.value;
+      _destinationAirport = destinationAirport.value;
+      var date = new Date(_year, _month - 1, _day);
+      weekday = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+      _dayOfWeek = date.getDay();
+      console.log("inserting ["+[_year, _month, _day, _tailNumber, _plannedDepartureTime, weekday[_dayOfWeek], _airline, _originAirport, _destinationAirport].join(',') + ']');
+
+      var data = {
+        "year": _year,
+        "month": _month,
+        "day": _day,
+        "tailNumber": _tailNumber,
+        "plannedDepartureTime": _plannedDepartureTime,
+        "airline": _airline,
+        "originAirport": _originAirport,
+        "destinationAirport": _destinationAirport,
+        "dayOfWeek": _dayOfWeek
+      }
+
+      fetch('/insertFlight', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+          if (response.status === 500) {
+            response.json().then(json => {
+              alert(json.error_message);
+            });
+          } else {
+            insertToTable(_year, _month, _day, _tailNumber, _plannedDepartureTime, weekday[_dayOfWeek], _airline, _originAirport, _destinationAirport);
+            console.log("insert successful!");
+          }
+        }).catch((error) => {
+            console.error(error);
+        });
+        location.reload();
+    }
+    function insertToTable(_year, _month, _day, _tailNumber, _plannedDepartureTime, _dayOfWeek, _airline, _originAirport, _destinationAirport){
+      // Select the table element
+      var table = document.querySelector('.table');
+      // Create a new row element
+      var newRow = document.createElement('tr');
+      // Set the data attributes for the new row
+      var flightId = [_year, _month, _day, _tailNumber, _plannedDepartureTime].join('|');
+      newRow.setAttribute('data-flight-id', flightId);
+
+      // Create and append the cells for the new row
+      var yearCell = document.createElement('td');
+      yearCell.innerText = _year;
+      newRow.appendChild(yearCell);
+
+      var monthCell = document.createElement('td');
+      monthCell.innerText = _month;
+      newRow.appendChild(monthCell);
+
+      var dayCell = document.createElement('td');
+      dayCell.innerText = _day;
+      newRow.appendChild(dayCell);
+
+      var tailNumberCell = document.createElement('td');
+      tailNumberCell.innerText = _tailNumber;
+      newRow.appendChild(tailNumberCell);
+
+      var plannedDepartureCell = document.createElement('td');
+      plannedDepartureCell.innerText = _plannedDepartureTime;
+      newRow.appendChild(plannedDepartureCell);
+
+      var dayOfWeekCell = document.createElement('td');
+      dayOfWeekCell.innerText = _dayOfWeek
+      newRow.appendChild(dayOfWeekCell);
+
+      var airlineCell = document.createElement('td');
+      airlineCell.innerText = _airline;
+      newRow.appendChild(airlineCell);
+
+      var originAirportCell = document.createElement('td');
+      originAirportCell.innerText = _originAirport;
+      newRow.appendChild(originAirportCell);
+
+      var destinationAirportCell = document.createElement('td');
+      destinationAirportCell.innerText = _destinationAirport;
+      newRow.appendChild(destinationAirportCell);
+
+      var checkboxCell = document.createElement('td');
+      var checkbox = document.createElement('input');
+      checkbox.setAttribute('type', 'checkbox');
+      checkbox.setAttribute('name', 'selectedFlights');
+      checkbox.setAttribute('value', flightId);
+      checkboxCell.appendChild(checkbox);
+      newRow.appendChild(checkboxCell);
+
+      var buttonCell = document.createElement('td');
+      var editButton = document.createElement('button');
+      editButton.setAttribute('onclick', 'editRow(this, event)');
+      editButton.innerText = 'Edit';
+      editButton.className = 'btn btn-info edit-btn';
+      buttonCell.appendChild(editButton);
+      var saveButton = document.createElement('button');
+      saveButton.setAttribute('onclick', 'saveRow(this, event)');
+      saveButton.setAttribute('style', 'display: none;');
+      saveButton.innerText = 'Save';
+      saveButton.className = 'btn btn-success save-btn';
+      buttonCell.appendChild(saveButton);
+      newRow.appendChild(buttonCell);
+
+      // Append the new row to the table body
+      var tableBody = table.querySelector('tbody');
+      tableBody.appendChild(newRow);
+    }
+</script>
+</html>

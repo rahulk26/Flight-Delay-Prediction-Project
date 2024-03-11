@@ -1,0 +1,20 @@
+.navbar {
+  margin-bottom: 50px;
+}
+
+.navbar-brand {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.navbar-nav .nav-item {
+  margin-right: 10px;
+}
+
+.nav-link {
+  font-size: 18px;
+}
+
+.navbar-text {
+  padding-right: 30px;
+}

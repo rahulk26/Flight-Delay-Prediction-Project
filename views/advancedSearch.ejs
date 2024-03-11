@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Advanced Search</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/css; charset=utf-8">
+    <link rel="stylesheet" href="/stylesheets/navbar.css">
+    <link rel="stylesheet" href="/stylesheets/table.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+<body>
+    <% include navbar.ejs %>
+    <div class="container mt-5">
+        <h1>Find Cities with Highest Delayed/Canceled Departures</h1>
+        <form>
+          <div class="form-group">
+            <label for="monthSelect">Select Month:</label>
+            <select class="form-control" id="monthSelect1" name="month">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="getHighestDepartures(event)">Find Cities</button>
+        </form>
+        <hr>
+        <h2>Results:</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">City</th>
+              <th scope="col">Departures</th>
+            </tr>
+          </thead>
+          <tbody id="resultTable1">
+          </tbody>
+        </table>
+    </div>
+    <div class="container mt-5">
+        <h1>Find the Count of Delayed of an Airport in each Time</h1>
+        <form>
+          <div class="form-row">
+            <div class="form-group col-md-2">
+                <label for="originAirport">Origin Airport:</label>
+                <input type="text" class="form-control" id="originAirport" name="originAirport" value="<%= typeof originAirport !== 'undefined' ? originAirport : '' %>">
+            </div>
+            <div class="form-group col-md-2">
+                <label for="monthSelect">Select Month:</label>
+                <select class="form-control" id="monthSelect2" name="month">
+                    <option value="">-- Select Month --</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>    
+            </div>
+            <div class="submit-button-container" style="height: 50px; margin-top: 25px;">
+                <button type="button" class="btn btn-primary" onclick="getCanceledTimes(event)">Find Results</button>
+            </div>
+        </div>
+        </form>
+        <hr>
+        <h2>Results:</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Origin Airport</th>
+              <th scope="col">Month</th>
+              <th scope="col">PlannedDepartureTime</th>
+              <th scope="col">Delayed/Canceled Times</th>
+            </tr>
+          </thead>
+          <tbody id="resultTable2">
+          </tbody>
+        </table>
+    </div>
+    <div class="container mt-5">
+      <h1>Get Flight Details By Airport Name</h1>
+      <!-- TODO: implement a select component to select airport name -->
+      <!-- retreive the select options from the back end when loading the page -->
+      <!-- TODO: implement a result table to show the search result -->
+      <!-- the result table will be updated to how the result after clicking the search button -->
+      <form>
+        <div class="form-row">
+          <div class="form-group col-md-2">
+              <label for="monthSelect">Select Airport:</label>
+              <select id = "airportNameSelector" class="form-control">
+                <script>
+                  fetch('/getAllAirportNames')
+                    .then(response => response.json())
+                    .then(response => {
+                      for(let i in response.results){
+                        const optionElement = document.createElement('option');
+                        optionElement.textContent = response.results[i];
+                        document.querySelector('#airportNameSelector').appendChild(optionElement);
+                      }
+                      response.results.forEach(option => {
+                        
+                      });
+                    });
+                </script>
+              </select>  
+          </div>
+          <div class="form-group col-md-2">
+            <label for="monthSelect">Select Direction:</label>
+            <select id = "directionSelector" class="form-control">
+              <option>
+                From
+              </option>
+              <option>
+                To
+              </option>
+              <option>
+                Both
+              </option>
+            </select>  
+        </div>
+          <div class="submit-button-container" style="height: 50px; margin-top: 25px;">
+              <button type="button" class="btn btn-primary" onclick="getFlightDetails(event)">Find Results</button>
+          </div>
+        </div>
+      </form>
+      <hr>
+      <h2>Results:</h2>
+        <table class="table">
+          <thead>
+          <tr>
+              <th scope="col">Year</th>
+              <th scope="col">Month</th>
+              <th scope="col">Day</th>
+              <th scope="col">Tail Number</th>
+              <th scope="col">Planned Departure Time</th>
+              <th scope="col">Day of Week</th>
+              <th scope="col">Airline</th>
+              <th scope="col">Origin Airport</th>
+              <th scope="col">Destination Airport</th>
+            </tr>
+          </thead>
+          <tbody id="resultTable3">
+          </tbody>
+        </table>
+    </div>
+</body>
+<script>
+    async function getHighestDepartures(event) {
+        event.preventDefault();
+        const month = document.querySelector('#monthSelect1').value;
+        const response = await fetch(`/mostDepartureCities?month=${month}`);
+        if (!response.ok) {
+            console.error(response.statusText);
+            return;
+        }
+        const json = await response.json();
+        results = json.results;
+        console.log(results);
+        const resultTable = document.querySelector('#resultTable1');
+        resultTable.innerHTML = '';
+        results.forEach((result) => {
+            const row = document.createElement('tr');
+            const cityCell = document.createElement('td');
+            const departuresCell = document.createElement('td');
+            cityCell.innerText = result.Name;
+            departuresCell.innerText = result.Departures;
+            row.appendChild(cityCell);
+            row.appendChild(departuresCell);
+            resultTable.appendChild(row);
+        });
+    }
+
+    async function getFlightDetails(event) {
+        event.preventDefault();
+        const airport = document.querySelector('#airportNameSelector').value;
+        const direction = document.querySelector('#directionSelector').value;
+        console.log(" airport: " + airport);
+        const response = await fetch(`/getFlightsByAirportName?airportName=${airport}&direction=${direction}`);
+        if (!response.ok) {
+            console.error(response.statusText);
+            return;
+        }
+        const json = await response.json();
+        results = json.results;
+        console.log(results);
+        const resultTable = document.querySelector('#resultTable3');
+        resultTable.innerHTML = '';
+        results.forEach((result) => {
+            const row = document.createElement('tr');
+            const yearCell = document.createElement('td');
+            const monthCell = document.createElement('td');
+            const dayCell = document.createElement('td');
+            const tailNumberCell = document.createElement('td');
+            const departureTimeCell = document.createElement('td');
+            const dayOfWeekCell = document.createElement('td');
+            const airlineCell = document.createElement('td');
+            const originAirportCell = document.createElement('td');
+            const destinationAirportCell = document.createElement('td');
+            yearCell.innerText = result.Year;
+            monthCell.innerText = result.Month;
+            dayCell.innerText = result.Day;
+            tailNumberCell.innerText = result.TailNumber;
+            departureTimeCell.innerText = result.PlannedDepartureTime;
+            dayOfWeekCell.innerText = result.DayOfWeek;
+            airlineCell.innerText = result.Airline;
+            originAirportCell.innerText = result.OriginAirport;
+            destinationAirportCell.innerText = result.DestinationAirport;
+            row.appendChild(yearCell);
+            row.appendChild(monthCell);
+            row.appendChild(dayCell);
+            row.appendChild(tailNumberCell);
+            row.appendChild(departureTimeCell);
+            row.appendChild(dayOfWeekCell);
+            row.appendChild(airlineCell);
+            row.appendChild(originAirportCell);
+            row.appendChild(destinationAirportCell);
+            resultTable.appendChild(row);
+        });
+    }
+
+    async function getCanceledTimes(event) {
+        event.preventDefault();
+        const month = document.querySelector('#monthSelect2').value;
+        const airport = document.querySelector('#originAirport').value;
+        console.log("month: " + month + " airport: " + airport);
+        const response = await fetch(`/getCanceledTimes?month=${month}&airportName=${airport}`);
+        if (!response.ok) {
+            console.error(response.statusText);
+            return;
+        }
+        const json = await response.json();
+        results = json.results;
+        console.log(results);
+        const resultTable = document.querySelector('#resultTable3');
+        resultTable.innerHTML = '';
+        results.forEach((result) => {
+            const row = document.createElement('tr');
+            const airportCell = document.createElement('td');
+            const monthCell = document.createElement('td');
+            const departureTimeCell = document.createElement('td');
+            const countCell = document.createElement('td');
+            airportCell.innerText = result.Airport;
+            monthCell.innerText = result.Month;
+            departureTimeCell.innerText = result.PlannedDepartureTime;
+            countCell.innerText = result.CountOfDelayedOrCancelledFlight;
+            row.appendChild(airportCell);
+            row.appendChild(monthCell);
+            row.appendChild(departureTimeCell);
+            row.appendChild(countCell);
+            resultTable.appendChild(row);
+        });
+    }
+
+</script>
+</html>
